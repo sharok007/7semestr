@@ -1,0 +1,6 @@
+<config>
+    <fileIn>in</fileIn>
+    <fileOut>out</fileOut>
+    <sizeFile>200</sizeFile>
+    <countProcess>5</countProcess>
+</config>
