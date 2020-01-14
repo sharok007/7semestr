@@ -1,4 +1,7 @@
 #include <iostream>
+#include <cstdlib>
+#include <cstring>
+
 #include <sstream>
 #include <list>
 #include <stack>
@@ -15,7 +18,7 @@ using namespace std;
 const int LEFT_ASSOC  = 0;
 const int RIGHT_ASSOC = 1;
 
-typedef map< string, pair< int,int >> OpMap;
+typedef map< string, pair< int,int > > OpMap;
 typedef vector<string>::const_iterator cv_iter;
 typedef string::iterator s_iter;
 
@@ -157,13 +160,13 @@ double RPNtoDouble( vector<string> tokens )
 
             const string val2 = st.top();
             st.pop();
-            const double d2 = strtod( val2.c_str(), nullptr );
+            const double d2 = strtod( val2.c_str(), NULL );
 
             if ( !st.empty() )
             {
                 const string val1 = st.top();
                 st.pop();
-                const double d1 = strtod( val1.c_str(), nullptr );
+                const double d1 = strtod( val1.c_str(), NULL );
 
                 result = token == "+" ? d1 + d2 :
                                         token == "-" ? d1 - d2 :
@@ -184,7 +187,7 @@ double RPNtoDouble( vector<string> tokens )
         }
     }
 
-    return strtod( st.top().c_str(), nullptr );
+    return strtod( st.top().c_str(), NULL );
 }
 
 vector<string> getExpressionTokens( const string& expression )
@@ -269,11 +272,15 @@ int main()
 
                 if ( infixToRPN( tokens, static_cast<int>(tokens.size()), rpn ) ){
                     shared->result = RPNtoDouble( rpn );
-                    cout << shared->buff << " = " << shared->result << endl;
                     shared->msg_type = WRITE_STR;
+                    strcpy(shared->status, "CALCULATE");
+                    cout << "STATUS: " << shared->status << endl;
                 }
                 else{
                     cout << "Mis-match in parentheses" << endl;
+                    shared->msg_type = EMPTY_STR_MEM;
+                    strcpy(shared->status, "ERROR");
+                    cout << "STATUS: " << shared->status << endl;
                     continue;
                 }
             }

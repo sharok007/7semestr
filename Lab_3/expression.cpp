@@ -3,7 +3,8 @@
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
-
+#include <cstdlib>
+#include <cstdio>
 #include "queuemessage.h"
 
 using namespace std;
@@ -46,7 +47,9 @@ int main()
                     snprintf(msg.buff, BUFF_SIZE,"%s%d", temp, rand()%100 + 1);
                 strcpy(temp, msg.buff);
             }
+            cout << "EXPRESSION:  " << msg.buff << endl;
             msg.msg_type = SEND_STR;
+            sleep(5);
         }
         else
             msg.msg_type = FINISH;
@@ -63,7 +66,6 @@ int main()
             msg.msg_type = EMPTY_STR;
         }
 
-        sleep(5);
         enumeration++;
     }
 

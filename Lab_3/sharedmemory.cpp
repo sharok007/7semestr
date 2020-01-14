@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <cstring>
+#include <cstdlib>
 #include "sharedm.h"
 #include "queuemessage.h"
 
@@ -57,9 +58,11 @@ int main()
 
             //Записываем в разделяемую память
             if(msg.msg_type == SEND_STR){
-                cout << "Received message = " << msg.buff << endl;
+                cout << "RECEIVED MESSAGE = " << msg.buff << endl;
                 strcpy(shared->buff, msg.buff);
                 shared->msg_type = RECEIVE_STR;
+                strcpy(shared->status, "READ");
+                cout << "STATUS: " << shared->status << endl;
             }
             if(msg.msg_type == FINISH)
                 shared->msg_type = FINISH_MEM;

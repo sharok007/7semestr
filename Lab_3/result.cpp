@@ -4,6 +4,7 @@
 #include <sys/ipc.h>
 #include <fstream>
 #include "sharedm.h"
+#include <cstdlib>
 
 using namespace std;
 
@@ -48,6 +49,8 @@ int main()
                 snprintf(shared->buff, BUFF_SIZE, "");
                 shared->result = 0.0;
                 shared->msg_type = EMPTY_STR_MEM;
+                strcpy(shared->status, "WRITE");
+                cout << "STATUS: " << shared->status << endl;
             }
             //Снимаем блокировку
             semctl(semid, 0, SETVAL, 0);

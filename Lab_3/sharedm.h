@@ -16,6 +16,7 @@ enum{
 typedef struct memoryBuffer{
     long msg_type;
     char buff[BUFF_SIZE];
+    char status[32];
     double result;
 }SharedMem;
 
