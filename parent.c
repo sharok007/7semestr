@@ -10,80 +10,167 @@
 
 void SIGUSR_signal_handler(int sig_number)
 {
-        printf("I receive SIGABRT signal!\n");
-        fflush(stdout);
-        abort();
+	printf("I receive SIGABRT signal!\n");
+	fflush(stdout);
+	abort();
+}
+
+int parsStrTime(char *buf, int j){
+	char tempTime[3];
+	int time, indexTempTime = 0;
+	
+	if(j != strlen(buf) - 1){
+		for(int i = strlen(buf) - 1; i > j; --i){
+			if(buf[i] != ' ' && buf[i] != ':'){
+				tempTime[indexTempTime] = buf[i];
+				indexTempTime++;
+			}
+			else
+				break;
+		}
+	}
+
+	if(strlen(tempTime) > 0){
+		char temp;
+		for (int i = 1; i < strlen(tempTime); ++i){
+			temp = tempTime[i - 1];
+			tempTime[i - 1] = tempTime[i];
+			tempTime[i] = temp;
+		}
+
+		time = atoi(tempTime);
+	}
+	else
+		time = 10;
+	
+	return time;
 }
 
 int main(int argc, char *argv[])
 {
-    srand(time(NULL));
 
-    pid_t pid;
-    char task[3][64] = {"Убери комнату", "Подними фантик","Купи молока"};
-    char string[64];
-    int fdParentWrite[2], status, flag = 1;
-    int fdChildWrite[2];
-    struct pollfd fds[2];
+	srand(time(NULL));
 
-    pipe(fdParentWrite);
+	pid_t pid;
+	char task[7][64] = {"Убери комнату:2", "Подними фантик:3","Купи молока: 8", "Помой пол: 3","Полей цветы: 2", "Подмети зал: 7", "Протри пыль: 2"};
+	int countTask;
+	int countProcess; 
+	int childNumber, numberTask = 0;
+	
+	printf("Введите количество процессов: ");
+	scanf("%d", &countProcess);
+	printf("Введите количество заданий: ");
+	scanf("%d", &countTask);
+
+	//pipe
+	int fdChild[countProcess][2];
+	int fdParent[countProcess][2];
+	
+	//poll
+	struct pollfd fds[countProcess][1];
+
+	//создаём файловые дескрипторы
+	for (int i = 0; i < countProcess; ++i)
+	{
+		pipe(fdChild[i]);
+		pipe(fdParent[i]);
+	}
 
     //создаём процессы
-    for(int j = 0; j < 5; ++j){
-        if(flag)
-            pid = fork();
+	for(int i = 0; i < countProcess; ++i){
+		
+		pid = fork();
 
-        if(pid < 0){
-            perror("fork");
-            _exit(-1);
-        }
-        if(pid == 0){
-            signal(SIGUSR1, SIGUSR_signal_handler);
-            flag = 0;
-        }
-    }
+		if(pid < 0){
+			perror("fork");
+			_exit(-1);
+		}
+		if(pid == 0){
+			signal(SIGUSR1, SIGUSR_signal_handler);
+			childNumber = i;
+			break;
+		}
+	}
 
-    //записываем и считываем
-    if(pid == 0){
-        close(fdParentWrite[1]);
+    //ребёнок читает задание, выполняет
+	if(pid == 0){
+		close(fdChild[childNumber][1]);
+		char taskChild[64];
+		
+		while(1){
+				read(fdChild[childNumber][0], taskChild, sizeof(taskChild));
+				if(taskChild[0] == '-' && taskChild[1] == 'e'){
+					close(fdParent[childNumber][0]);
+					char temp[32];
+					snprintf(temp, sizeof (temp), "%d", getpid());
+					write(fdParent[childNumber][1], temp, strlen(temp) + 1);
+					close(fdParent[childNumber][1]);
+					continue;
+				}
+				char str[64];
+				int j, time;
+				for(j = 0; j < strlen(taskChild); ++j){
+					if(taskChild[j] != ':')
+						str[j] = taskChild[j];
 
-        fds[0].fd = fdParentWrite[0];
-        fds[0].events = POLLIN;
-        while(1){
-            if(poll(fds, 2, 10000) > 0){
-                read(fdParentWrite[0], string, sizeof(string));
-                printf("%s: %d\n", string, getpid());
-                int time = rand()%5 + 1;
-                sleep(time);
-            }
-            else{
-                close(fdChildWrite[0]);
-                char temp[32];
-                snprintf(temp, sizeof (int), "%d", getpid());
-                write(fdChildWrite[1], temp, strlen(temp) + 1);
-                break;
-            }
-        }
-        _exit(0);
-    }
+					else
+						break;
+				}
 
-    else {
-        close(fdParentWrite[0]);
-        for(int i = 0; i < 3; ++i){
-            write(fdParentWrite[1], task[i], strlen(task[i])+1);
-            sleep(3);
-        }
-        close(fdChildWrite[1]);
-        fds[1].fd = fdChildWrite[0];
-        fds[1].events = POLLIN;
-        if(poll(fds, 2, -1) > 0){
-            char buff[32];
-            int chPid;
-            read(fdChildWrite[0], buff, sizeof (buff));
-            chPid = atoi(buff);
-            kill(chPid,SIGUSR1);
-        }
-    }
-    return 0;
+				time = parsStrTime(taskChild, j);
+				printf("PID: %d %s %d sec\n", getpid(), str, time); 
+				sleep(time);
+		}
+		_exit(0);
+	}
+	//родитель даёт задания
+	else {
+		printf("PARENT: %d\n", getpid());
+		int flag = 0;
+		int timeWhile = 0;
+		while(1){
+			//есть задания, раздаём их
+			if(!flag){
+				for(int i = 0; i < countProcess; ++i){;
+					close(fdChild[i][0]);
+					int taskN = rand()%7;
+					write(fdChild[i][1], task[taskN], strlen(task[taskN])+1);
+					numberTask++;
+					sleep(3);
+					if(numberTask == countTask){
+						for(int j = 0; j < countProcess; ++j){
+						write(fdChild[j][1], "-e", 4);
+						}
+						flag = 1;
+						break;
+					}
+				}
+			}
+			//задания закончились, ждём pid ребёнка
+			else{
+				for(int i = 0; i < countProcess; ++i){
+					close(fdChild[i][1]);
+					close(fdChild[i][0]);
+
+					close(fdParent[i][1]);
+					fds[i][0].fd = fdParent[i][0];
+					fds[i][0].events = POLLIN;
+					if(poll(fds[i], 1, 15000) > 0){
+						char pidCh[64];
+						read(fdParent[i][0], pidCh, sizeof(pidCh));
+						int children = atoi(pidCh);
+						printf("I'm kill %s\n", pidCh);
+						kill(children, SIGUSR1);
+						timeWhile++;
+					}						
+				}
+			}
+
+			if(timeWhile == countProcess)
+				break;
+		}
+	}
+
+	return 0;
 }
 
