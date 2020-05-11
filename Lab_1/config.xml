@@ -1,6 +1,0 @@
-<config>
-    <wordFile>words</wordFile>
-    <fileOut>out</fileOut>
-    <sizeFile>200</sizeFile>
-    <countProcess>5</countProcess>
-</config>
