@@ -1,0 +1,17 @@
+CC=g++
+CFLAGS=-c -Wall
+LDFLAGS= -std=c++11 -lpq
+SOURCES=chat_server.c chat_svc.c chat_xdr.c chat_server_with_db.c
+OBJECTS=$(SOURCES:.cpp=.o)
+EXECUTABLE=chat_server
+
+all: $(SOURCES) $(EXECUTABLE)
+	
+$(EXECUTABLE): $(OBJECTS) 
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+
+.cpp.o:
+	$(CC) $(CFLAGS) $< -o $@
+
+clean:
+	rm -rf *.o chat_server
