@@ -1,16 +1,19 @@
 CC=g++
+
 CFLAGS=-c -Wall
-LDFLAGS=
-SOURCES=main.cpp vectorstruct.cpp
-OBJECTS=$(SOURCES:.cpp=.o)
-EXECUTABLE=main
 
-all: $(SOURCES) $(EXECUTABLE)
-	
-$(EXECUTABLE): $(OBJECTS) 
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+PARALFLAGS=-fopenmp -lpthread
 
-.cpp.o:
-	$(CC) $(CFLAGS) $< -o $@
+all: main
+
+main: main.o vectorstruct.o
+	$(CC) $(PARALFLAGS) main.o vectorstruct.o -o main
+
+main.o: main.cpp
+	$(CC) $(CFLAGS) main.cpp
+
+vectorstruct.o: vectorstruct.cpp
+	$(CC) $(CFLAGS) vectorstruct.cpp
+
 clean:
 	rm -rf *.o main
